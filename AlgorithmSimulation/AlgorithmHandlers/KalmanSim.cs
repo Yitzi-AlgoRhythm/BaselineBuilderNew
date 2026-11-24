@@ -44,8 +44,6 @@ namespace BaselineBuilderNew.AlgorithmSimulation.AlgorithmHandlers
                 return [];
             }
 
-            Console.WriteLine(result.ParameterZScores[Random.Shared.Next(97)]);
-
             return [result];
         }
     }

@@ -75,6 +75,7 @@ namespace BaselineBuilderNew.AlgorithmSimulation.Pipelines
 
             _kalmanSim.Init(_qc, _r0);
             _cusumSim.InitForCusumRaw(_thresholds);
+            _percentilesCalc.Reset();
         }
 
         protected override async Task SendAsync(ParameterData[] batch)

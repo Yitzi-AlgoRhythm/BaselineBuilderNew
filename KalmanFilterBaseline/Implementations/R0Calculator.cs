@@ -17,6 +17,8 @@ namespace BaselineBuilderNew.KalmanFilterBaseline.Implementations
 {
     internal class R0Calculator : IR0Calculator
     {
+        private const double MinVariance = 1e-9;
+
         private readonly IDatabaseReader _reader;
         private readonly NamingData _namingData;
 
@@ -71,11 +73,6 @@ namespace BaselineBuilderNew.KalmanFilterBaseline.Implementations
 
             await ProcessFlightsAsync(flights, RecalculateQuantiles);
 
-            foreach(var variableFound in _variablesFoundInDB)
-            {
-                Console.WriteLine($"{variableFound.Key} found? {variableFound.Value}");
-            }
-
             return new R0Result()
             {
                 R0DiagonalVector = Vector<double>.Build.DenseOfArray(await CalculateVariances(flights))
@@ -90,7 +87,9 @@ namespace BaselineBuilderNew.KalmanFilterBaseline.Implementations
 
             foreach (string variable in _namingData.ParameterNames)
             {
-                result.Add(_variances[variable]);
+                double clampedVariance = Math.Max(MinVariance, _variances[variable]);
+
+                result.Add(clampedVariance);
             }
 
             return result.ToArray();

@@ -15,7 +15,6 @@ using BaselineBuilderNew.KalmanFilterBaseline.Abstractions;
 using BaselineBuilderNew.KalmanFilterBaseline.Implementations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using MongoLib;
 using ThpUtils.Naming;
 

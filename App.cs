@@ -8,7 +8,7 @@ using BaselineBuilderNew.IO.Output;
 using BaselineBuilderNew.KalmanFilterBaseline.Abstractions;
 using Microsoft.Extensions.Hosting;
 
-namespace BaselineBuilderNew.Build
+namespace BaselineBuilderNew
 {
     internal class App : BackgroundService
     {
@@ -49,12 +49,20 @@ namespace BaselineBuilderNew.Build
 
             R0Result r0 = await _R0Calculator.CalculateR0();
 
-            Console.WriteLine("Calculated R0.");
+            Console.WriteLine("Calculated R0:");
+            foreach (double variance in r0.R0DiagonalVector)
+            {
+                Console.WriteLine(variance);
+            }
 
             _QcCalculator.Init(r0);
             QcResult qc = await _QcCalculator.CalculateQc();
 
-            Console.WriteLine("Calculated Qc.");
+            Console.WriteLine("Calculated Qc:");
+            foreach (double variableProcessNoise in qc.QcVector)
+            {
+                Console.WriteLine(variableProcessNoise);
+            }
 
             _covPipeline.InitPipeline(qc, r0);
             await _covPipeline.BeginSimulationAsync();

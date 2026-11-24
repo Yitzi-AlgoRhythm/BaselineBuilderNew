@@ -18,7 +18,9 @@ namespace BaselineBuilderNew.AlgorithmSimulation.AlgorithmHandlers
 
         public double MahalanobisDelegate(KalmanFilterResult kfResult)
         {
-            return _mahalanobis.ComputeD2(kfResult);
+            double distanceSquared = _mahalanobis.ComputeD2(kfResult);
+
+            return distanceSquared;
         }
 
         public void Init(CovResult cov)

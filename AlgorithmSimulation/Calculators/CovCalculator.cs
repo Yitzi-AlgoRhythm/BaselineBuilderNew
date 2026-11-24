@@ -6,46 +6,36 @@ internal class CovCalculator
 {
     private readonly int _dimension;
 
-    // Pair (i, j), i <= j, stored at [i, j]:
-    private readonly long[,] _pairCount;       // frames where both i and j were measured
-    private readonly double[,] _meanI;         // mean of field i over those frames
-    private readonly double[,] _meanJ;         // mean of field j over those frames
-    private readonly double[,] _coMoment;      // sum of (xi - meanI)(xj - meanJ)
+    private long _count;
+    private readonly double[] _mean;
+    private readonly double[] _delta;
+    private readonly double[,] _coMoment;   // sum of (xi - meanI)(xj - meanJ), stored at [i, j], i <= j
 
     public CovCalculator(int dimension)
     {
         _dimension = dimension;
-        _pairCount = new long[dimension, dimension];
-        _meanI = new double[dimension, dimension];
-        _meanJ = new double[dimension, dimension];
+        _mean = new double[dimension];
+        _delta = new double[dimension];
         _coMoment = new double[dimension, dimension];
     }
 
     public void RecalculateCovariance(KalmanFilterResult result)
     {
-        int[] measured = result.IndicesMeasured;
         Vector<double> z = result.ParameterZScores;
 
-        for (int a = 0; a < measured.Length; a++)
+        _count++;
+
+        for (int i = 0; i < _dimension; i++)
         {
-            for (int b = a; b < measured.Length; b++)
+            _delta[i] = z[i] - _mean[i];
+            _mean[i] += _delta[i] / _count;
+        }
+
+        for (int i = 0; i < _dimension; i++)
+        {
+            for (int j = i; j < _dimension; j++)
             {
-                int i = Math.Min(measured[a], measured[b]);
-                int j = Math.Max(measured[a], measured[b]);
-
-                double xi = z[i];
-                double xj = z[j];
-
-                _pairCount[i, j]++;
-                long n = _pairCount[i, j];
-
-                double deltaI = xi - _meanI[i, j];
-                _meanI[i, j] += deltaI / n;
-
-                double deltaJ = xj - _meanJ[i, j];
-                _meanJ[i, j] += deltaJ / n;
-
-                _coMoment[i, j] += deltaI * (xj - _meanJ[i, j]);
+                _coMoment[i, j] += _delta[i] * (z[j] - _mean[j]);
             }
         }
     }
@@ -58,11 +48,32 @@ internal class CovCalculator
         {
             for (int j = i; j < _dimension; j++)
             {
-                long n = _pairCount[i, j];
-                double value = n >= 2 ? _coMoment[i, j] / (n - 1) : 0.0;
+                double value = _count >= 2 ? _coMoment[i, j] / (_count - 1) : 0.0;
+
                 cov[i, j] = value;
                 cov[j, i] = value;
             }
+        }
+
+        for (int i = 0; i < _dimension; i++)
+        {
+            double variance = cov[i, i];
+
+            bool isProblematic = _count < 2
+                || variance == 0.0
+                || double.IsNaN(variance)
+                || double.IsInfinity(variance);
+
+            if (!isProblematic)
+                continue;
+
+            for (int k = 0; k < _dimension; k++)
+            {
+                cov[i, k] = 0.0;
+                cov[k, i] = 0.0;
+            }
+
+            cov[i, i] = 1.0;
         }
 
         return new CovResult { MDCovarianceMatrix = cov };
